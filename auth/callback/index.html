@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Authorization complete · Konten Studio Pro</title>
+    <link rel="stylesheet" href="../../styles.css" />
+    <style>
+      .code-box {
+        margin: 32px 0;
+        padding: 32px;
+        border: 2px solid var(--line);
+        background: var(--panel);
+        font-family: "Courier New", monospace;
+        font-size: clamp(20px, 3vw, 28px);
+        word-break: break-all;
+        letter-spacing: 0.5px;
+        user-select: all;
+        min-height: 80px;
+      }
+      .code-box.empty {
+        border-color: var(--accent);
+        background: #fff5f5;
+        color: var(--accent);
+      }
+      .copy-btn {
+        display: inline-block;
+        border: 2px solid var(--line);
+        background: var(--accent);
+        color: white;
+        padding: 12px 24px;
+        font-family: "Courier New", monospace;
+        font-size: 16px;
+        cursor: pointer;
+        text-transform: uppercase;
+      }
+      .copy-btn:hover { background: var(--ink); border-color: var(--ink); }
+      .copy-btn.copied { background: var(--green); border-color: var(--green); }
+      .steps {
+        margin: 32px 0;
+        padding: 0;
+        list-style: none;
+        counter-reset: step;
+      }
+      .steps li {
+        counter-increment: step;
+        padding: 16px 0 16px 56px;
+        position: relative;
+        font-size: 18px;
+        line-height: 1.5;
+        border-bottom: 1px solid rgba(21, 21, 21, 0.1);
+      }
+      .steps li::before {
+        content: counter(step);
+        position: absolute;
+        left: 0;
+        top: 16px;
+        width: 36px;
+        height: 36px;
+        border: 2px solid var(--line);
+        display: grid;
+        place-items: center;
+        font-family: "Courier New", monospace;
+        font-weight: bold;
+        background: var(--panel);
+      }
+      .meta {
+        margin-top: 24px;
+        padding: 16px;
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+        color: var(--muted);
+        background: var(--panel);
+        border: 1px dashed var(--line);
+        word-break: break-all;
+      }
+      .back-link {
+        display: inline-block;
+        margin-top: 32px;
+        border: 2px solid var(--line);
+        background: var(--panel);
+        padding: 12px 16px;
+        text-decoration: none;
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+      }
+      .back-link:hover { background: var(--ink); color: var(--paper); }
+      code {
+        font-family: "Courier New", monospace;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        padding: 2px 6px;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">Step 2 of 2</p>
+        <h1>Authorization complete</h1>
+        <p class="lede">
+          Copy the code below and paste it back into the terminal to finish
+          connecting your TikTok account.
+        </p>
+      </header>
+
+      <section>
+        <div id="codeBox" class="code-box empty" aria-live="polite">
+          No authorization code found. Please return to the terminal and try again.
+        </div>
+        <button id="copyBtn" class="copy-btn" type="button" hidden>
+          Copy code
+        </button>
+        <noscript>
+          <p style="margin-top: 16px; color: var(--accent); font-family: 'Courier New', monospace;">
+            JavaScript is disabled. Triple-click the code box above to select all, then press Ctrl+C / Cmd+C.
+          </p>
+        </noscript>
+      </section>
+
+      <section>
+        <h2 style="font-size: 28px; margin: 48px 0 16px;">Next steps</h2>
+        <ol class="steps">
+          <li>Click <strong>Copy code</strong> above &mdash; or triple-click the box to select manually.</li>
+          <li>Switch back to the terminal where you ran <code>pnpm tiktok:login</code>.</li>
+          <li>Paste the code at the prompt and press <strong>Enter</strong>.</li>
+          <li>The CLI exchanges this code for an access token. You can close this tab.</li>
+        </ol>
+      </section>
+
+      <section id="metaSection" class="meta" hidden></section>
+
+      <a class="back-link" href="../../">&larr; Back to Konten Studio Pro</a>
+    </main>
+
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var code = params.get("code");
+        var state = params.get("state");
+        var error = params.get("error");
+        var errorDescription = params.get("error_description");
+
+        var codeBox = document.getElementById("codeBox");
+        var copyBtn = document.getElementById("copyBtn");
+        var metaSection = document.getElementById("metaSection");
+
+        if (error) {
+          codeBox.textContent =
+            "Authorization failed: " +
+            (errorDescription || error) +
+            ". Return to the terminal and try again.";
+          return;
+        }
+
+        if (!code) {
+          return;
+        }
+
+        codeBox.classList.remove("empty");
+        codeBox.textContent = code;
+        copyBtn.hidden = false;
+
+        if (state) {
+          metaSection.hidden = false;
+          metaSection.textContent = "State (for reference, do not paste this): " + state;
+        }
+
+        copyBtn.addEventListener("click", async function () {
+          try {
+            await navigator.clipboard.writeText(code);
+            var original = copyBtn.textContent;
+            copyBtn.textContent = "Copied \u2713";
+            copyBtn.classList.add("copied");
+            setTimeout(function () {
+              copyBtn.textContent = original;
+              copyBtn.classList.remove("copied");
+            }, 2000);
+          } catch (err) {
+            // Fallback: select text in codeBox
+            var range = document.createRange();
+            range.selectNodeContents(codeBox);
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            copyBtn.textContent = "Press Ctrl+C / Cmd+C";
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
